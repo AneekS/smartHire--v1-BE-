@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "skills": {
+    "backend-patterns": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "github",
+      "computedHash": "24d5803368c402ed5a72541dbbd0cb9975c56e574cdf4b45332f54991186301a"
+    },
+    "nodejs-backend-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "4c6bf8fbd9a13d61e326ddeb210af5854fea3b253922a7981bd7718f3b765c08"
+    },
+    "openapi-to-typescript": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "525b39ee84d8fbc835d1dea710fb36b40fd4834441a4d18d75a8dafe985eeacd"
+    },
+    "typescript-advanced-types": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "a03a83996ae9d2f4dd6d4db08899d61761c7d5351bce4c695d20a21197742a36"
+    }
+  }
+}

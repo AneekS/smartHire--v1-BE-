@@ -1,0 +1,65 @@
+{
+  "name": "smarthire-api",
+  "version": "1.0.0",
+  "description": "SmartHire AI Backend — Modular Monolith",
+  "main": "dist/app.js",
+  "scripts": {
+    "dev": "tsx watch src/app.ts",
+    "dev:api": "tsx watch src/app.ts",
+    "dev:worker": "tsx watch src/worker.ts",
+    "dev:all": "concurrently \"npm run dev:api\" \"npm run dev:worker\"",
+    "build": "tsc --project tsconfig.json",
+    "start": "node -r tsconfig-paths/register dist/app.js",
+    "worker:dev": "tsx watch src/worker.ts",
+    "worker:start": "node -r tsconfig-paths/register dist/worker.js",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:studio": "prisma studio",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "fastify": "^4.28.0",
+    "fastify-plugin": "^4.5.1",
+    "@fastify/helmet": "^11.1.1",
+    "@fastify/cors": "^9.0.1",
+    "@fastify/rate-limit": "^9.1.0",
+    "@fastify/swagger": "^8.14.0",
+    "@fastify/multipart": "^8.3.0",
+    "fastify-type-provider-zod": "^2.0.0",
+    "prisma": "^5.17.0",
+    "@prisma/client": "^5.17.0",
+    "ioredis": "^5.4.1",
+    "bullmq": "^5.12.0",
+    "@aws-sdk/client-s3": "^3.624.0",
+    "@aws-sdk/s3-request-presigner": "^3.624.0",
+    "openai": "^4.55.0",
+    "zod": "^3.23.8",
+    "dotenv": "^16.4.5",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.8.0",
+    "file-type": "^19.5.0",
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "@sentry/node": "^8.26.0",
+    "@bull-board/api": "^5.22.0",
+    "@bull-board/fastify": "^5.22.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "tsx": "^4.19.0",
+    "@types/node": "^22.5.0",
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/pdf-parse": "^1.1.4",
+    "vitest": "^2.0.5",
+    "concurrently": "^8.2.2",
+    "tsconfig-paths": "^4.2.0"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

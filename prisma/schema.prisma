@@ -1,0 +1,336 @@
+// SmartHire AI — Prisma Schema
+// PostgreSQL 15
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────
+// AUTH & CANDIDATES
+// ─────────────────────────────────────────
+
+model Candidate {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  phone             String?   @unique
+  passwordHash      String?
+  oauthProvider     String?
+  oauthId           String?
+  isEmailVerified   Boolean   @default(false)
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  profile           CandidateProfile?
+  resumes           Resume[]
+  applications      Application[]
+  refreshTokens      RefreshToken[]
+  skillScores        CandidateSkill[]
+  reputationScore   ReputationScore?
+  notifications     Notification[]
+
+  @@map("candidates")
+}
+
+model RefreshToken {
+  id          String    @id @default(cuid())
+  tokenHash   String    @unique
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+  isRevoked   Boolean   @default(false)
+
+  @@index([candidateId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+model CandidateProfile {
+  id                  String    @id @default(cuid())
+  candidateId         String    @unique
+  candidate           Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  fullName            String
+  avatarUrl           String?
+  city                String?
+  state               String?
+  linkedinUrl         String?
+  githubUrl           String?
+  portfolioUrl        String?
+
+  preferredRoles      String[]
+  preferredLocations  String[]
+  salaryExpectation   Int?
+  workType            String?
+  experienceLevel     String?
+
+  education           Json?
+
+  completionScore     Int       @default(0)
+  isPublic            Boolean   @default(true)
+  showReputationScore Boolean   @default(false)
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@map("candidate_profiles")
+}
+
+// ─────────────────────────────────────────
+// RESUME
+// ─────────────────────────────────────────
+
+model Resume {
+  id              String      @id @default(cuid())
+  candidateId     String
+  candidate       Candidate   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  fileName        String
+  fileUrl         String
+  fileType        String
+  fileSize        Int
+  fileHash        String?
+  version         Int         @default(1)
+  isActive        Boolean     @default(true)
+
+  parseStatus     ParseStatus @default(PENDING)
+  parseError      String?
+  parsedAt        DateTime?
+
+  parsedData      Json?
+  extractedSkills String[]
+  yearsExperience Float?
+  educationLevel  String?
+
+  atsScore        Int?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  suggestions     ResumeSuggestion[]
+  jobAtsScores    JobAtsScore[]
+
+  @@index([candidateId])
+  @@index([parseStatus])
+  @@index([candidateId, fileHash])
+  @@map("resumes")
+}
+
+enum ParseStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model ResumeSuggestion {
+  id          String    @id @default(cuid())
+  resumeId    String
+  resume      Resume    @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  jobId       String?
+
+  type        String
+  severity    String
+  section     String?
+  original    String?
+  suggested   String?
+  reason      String
+  isApplied   Boolean   @default(false)
+
+  createdAt   DateTime  @default(now())
+
+  @@index([resumeId])
+  @@index([jobId])
+  @@map("resume_suggestions")
+}
+
+model JobAtsScore {
+  id              String    @id @default(cuid())
+  resumeId        String
+  resume          Resume    @relation(fields: [resumeId], references: [id])
+  jobId           String
+  job             Job       @relation(fields: [jobId], references: [id])
+
+  score           Int
+  matchedKeywords String[]
+  missingKeywords String[]
+  breakdown       Json?
+
+  computedAt      DateTime  @default(now())
+
+  @@unique([resumeId, jobId])
+  @@map("job_ats_scores")
+}
+
+// ─────────────────────────────────────────
+// SKILLS
+// ─────────────────────────────────────────
+
+model Skill {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  category    String
+  aliases     String[]
+
+  candidateSkills   CandidateSkill[]
+  jobRequiredSkills JobSkill[]
+
+  @@map("skills")
+}
+
+model CandidateSkill {
+  id          String    @id @default(cuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  skillId     String
+  skill       Skill     @relation(fields: [skillId], references: [id])
+
+  proficiency Int       @default(50)
+  source      String
+
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([candidateId, skillId])
+  @@index([candidateId])
+  @@index([skillId])
+  @@map("candidate_skills")
+}
+
+// ─────────────────────────────────────────
+// JOBS
+// ─────────────────────────────────────────
+
+model Job {
+  id                String    @id @default(cuid())
+  title             String
+  company           String
+  companyLogoUrl    String?
+  location          String
+  locationType      String
+  salaryMin         Int?
+  salaryMax         Int?
+  experienceMin     Float
+  experienceMax     Float
+  description       String
+  shortDescription  String?
+  keywords          String[]
+  status            JobStatus @default(ACTIVE)
+  postedBy          String?
+
+  publishedAt       DateTime  @default(now())
+  expiresAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  requiredSkills    JobSkill[]
+  applications      Application[]
+  atsScores         JobAtsScore[]
+
+  @@index([status])
+  @@index([location])
+  @@map("jobs")
+}
+
+enum JobStatus {
+  ACTIVE
+  PAUSED
+  CLOSED
+  DRAFT
+}
+
+model JobSkill {
+  id          String    @id @default(cuid())
+  jobId       String
+  job         Job       @relation(fields: [jobId], references: [id])
+  skillId     String
+  skill       Skill     @relation(fields: [skillId], references: [id])
+  isRequired  Boolean   @default(true)
+  weight      Int       @default(1)
+
+  @@unique([jobId, skillId])
+  @@map("job_skills")
+}
+
+// ─────────────────────────────────────────
+// APPLICATIONS
+// ─────────────────────────────────────────
+
+model Application {
+  id          String    @id @default(cuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  jobId       String
+  job         Job       @relation(fields: [jobId], references: [id])
+  resumeId    String
+
+  status      AppStatus @default(APPLIED)
+
+  appliedAt         DateTime  @default(now())
+  reviewedAt        DateTime?
+  interviewedAt    DateTime?
+  offeredAt        DateTime?
+  hiredAt          DateTime?
+  rejectedAt       DateTime?
+
+  notes             String?
+
+  @@unique([candidateId, jobId])
+  @@index([candidateId])
+  @@index([candidateId, status])
+  @@index([jobId])
+  @@map("applications")
+}
+
+enum AppStatus {
+  APPLIED
+  UNDER_REVIEW
+  INTERVIEW_SCHEDULED
+  OFFER
+  HIRED
+  REJECTED
+  WITHDRAWN
+}
+
+// ─────────────────────────────────────────
+// REPUTATION & NOTIFICATIONS
+// ─────────────────────────────────────────
+
+model ReputationScore {
+  id                    String    @id @default(cuid())
+  candidateId           String    @unique
+  candidate             Candidate @relation(fields: [candidateId], references: [id])
+
+  overallScore          Int       @default(0)
+  interviewPerformance  Int       @default(0)
+  responseRate           Int       @default(0)
+  assessmentCompletion   Int       @default(0)
+  profileCompleteness    Int       @default(0)
+
+  lastCalculatedAt      DateTime  @default(now())
+
+  @@map("reputation_scores")
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+
+  type        String
+  title       String
+  body        String
+  data        Json?
+  isRead      Boolean   @default(false)
+
+  createdAt   DateTime  @default(now())
+
+  @@index([candidateId, isRead])
+  @@map("notifications")
+}
