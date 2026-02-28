@@ -1,1 +1,0 @@
-declare namespace Express { interface Request { id?: string; user?: { userId: string; role: string; email: string; } } }
